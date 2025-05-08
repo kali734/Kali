@@ -1,0 +1,9 @@
+mnemonic
+bip-utils
+eth-account
+web3
+requests[socks]
+pysocks
+transformers
+torch
+streamlit
