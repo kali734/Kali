@@ -1,0 +1,46 @@
+name: Kali Hunter CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install python-dotenv mnemonic bip-utils transformers torch requests
+
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        flake8 hunter.py --max-line-length=120
+
+    - name: Smoke‑run hunter
+      env:
+        MORALIS_API_KEY: ${{ secrets.MORALIS_API_KEY }}
+      run: |
+        python hunter.py --smart -l 12 -w 1 --threshold 0.0001 --networks btc eth bsc matic
+
+    - name: Build Docker image
+      run: docker build -t kali-hunter:ci .
+
+    - name: Push image to GHCR
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ${{ github.repository_owner }}/kali-hunter:latest
